@@ -10,7 +10,7 @@ options = OpenStruct.new({
 
 
 OptionParser.new do |opts|
-  opts.banner "Weatherly - A Weewx-to-IRC weather bot\n" +
+  opts.banner = "Weatherly - A Weewx-to-IRC weather bot\n" +
     "Usage: weatherbot [--server SERVER] [--channel CHANNEL] " +
     "[options ...]"
 
@@ -20,7 +20,8 @@ OptionParser.new do |opts|
 
   opts.on '-cCHANNEL', '--channel=CHANNEL', 'IRC channel to join to' do |v|
     options.channel = v
-  
+  end
+
   opts.on '-SSOURCE', '--weewx-rss=SOURCE', 'Weewx RSS feed to read from' do |v|
     options.source = v
   end
@@ -36,12 +37,12 @@ OptionParser.new do |opts|
 end.parse!
 
 
-unless options.server do
+unless options.server then
   $stderr.puts "ERROR: No IRC server given."
   exit 1
 end
 
-unless options.channel do
+unless options.channel then
   $stderr.puts "ERROR: No channel given."
   exit 1
 end
