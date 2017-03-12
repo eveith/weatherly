@@ -1,0 +1,2 @@
+require 'weatherly/weewxsource'
+

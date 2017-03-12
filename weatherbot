@@ -1,0 +1,62 @@
+#!/usr/bin/env ruby
+
+require 'cinch'
+require 'optparse'
+require 'weatherly'
+
+
+options = OpenStruct.new({
+  nick: 'Weatherly' })
+
+
+OptionParser.new do |opts|
+  opts.banner "Weatherly - A Weewx-to-IRC weather bot\n" +
+    "Usage: weatherbot [--server SERVER] [--channel CHANNEL] " +
+    "[options ...]"
+
+  opts.on '-sSERVER', '--server=SERVER', 'IRC server to connect to' do |v|
+    options.server = v
+  end
+
+  opts.on '-cCHANNEL', '--channel=CHANNEL', 'IRC channel to join to' do |v|
+    options.channel = v
+  
+  opts.on '-SSOURCE', '--weewx-rss=SOURCE', 'Weewx RSS feed to read from' do |v|
+    options.source = v
+  end
+
+  opts.on '-NNICK', '--nick=NICK', 'Nick of the bot (default: Weatherly)' do |v|
+    options.nick = v
+  end
+
+  opts.on '-h', '--help', 'This help' do
+    puts opts
+    exit 0
+  end
+end.parse!
+
+
+unless options.server do
+  $stderr.puts "ERROR: No IRC server given."
+  exit 1
+end
+
+unless options.channel do
+  $stderr.puts "ERROR: No channel given."
+  exit 1
+end
+
+
+Cinch::Bot.new do
+  configure do |c|
+    c.nick      = options.nick
+    c.server    = options.server
+    c.channels  = ["#weather"]
+    c.plugins.plugins = [ Weatherly::WeewxSource ]
+    c.plugins.options[ Weatherly::WeewxSource ] = { source: options.source }
+  end
+
+  on :join do |m|
+    m.reply "Hello! I am your friendly weather bot.  :)"
+  end
+end.start
