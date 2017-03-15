@@ -3,6 +3,9 @@ require 'rexml/document'
 
 
 module Weatherly
+
+  # This plugin reads an RSS feed from a WeeWX weather station and prints the
+  # current conditions to all channels the bot is in.
   class WeewxSource
     include Cinch::Plugin
 

@@ -5,13 +5,20 @@ require 'optparse'
 require 'weatherly'
 
 
+MODES = {
+  weewx: Weatherly::WeewxSource,
+  averager: Weatherly::Averager
+}
+
+
 options = OpenStruct.new({
   nick: 'Weatherly' })
 
 
 OptionParser.new do |opts|
   opts.banner = "Weatherly - A Weewx-to-IRC weather bot\n" +
-    "Usage: weatherbot [--server SERVER] [--channel CHANNEL] " +
+    "Usage: weatherbot [--mode MODE] " +
+    "[--server SERVER] [--channel CHANNEL] " +
     "[options ...]"
 
   opts.on '-sSERVER', '--server=SERVER', 'IRC server to connect to' do |v|
@@ -22,7 +29,24 @@ OptionParser.new do |opts|
     options.channel = v
   end
 
-  opts.on '-SSOURCE', '--weewx-rss=SOURCE', 'Weewx RSS feed to read from' do |v|
+  opts.on '-mMODE', '--mode=MODE',
+      'Set bot mode; one of "weewx" or "averager"' do |v|
+    mode = v.to_sym
+
+    if ! [:weewx, :averager].include? mode then
+      $stderr.puts "ERROR: Mode must be one of \"weewx\" or \"averager\", " +
+        "but #{mode} was given."
+      exit 1
+    end
+
+    options.mode = MODES[mode]
+  end
+
+  opts.on '-SSOURCE', '--source=SOURCE',
+      "The bot's data source, dependent on its mode. " +
+        "If the mode is \"weewx\", this designates the Weewx RSS feed, " +
+        "if the mode is \"averager\", this designates the name of the " +
+        "source bot." do |v|
     options.source = v
   end
 
@@ -37,13 +61,18 @@ OptionParser.new do |opts|
 end.parse!
 
 
-unless options.server then
+if ! options.server then
   $stderr.puts "ERROR: No IRC server given."
   exit 1
 end
 
-unless options.channel then
+if ! options.channel then
   $stderr.puts "ERROR: No channel given."
+  exit 1
+end
+
+if ! options.mode then
+  $stderr.puts "ERROR: No mode given."
   exit 1
 end
 
@@ -52,9 +81,9 @@ Cinch::Bot.new do
   configure do |c|
     c.nick      = options.nick
     c.server    = options.server
-    c.channels  = ["#weather"]
-    c.plugins.plugins = [ Weatherly::WeewxSource ]
-    c.plugins.options[ Weatherly::WeewxSource ] = { source: options.source }
+    c.channels  = [ options.channel ]
+    c.plugins.plugins = [ options.mode ]
+    c.plugins.options[ options.mode ] = { source: options.source }
   end
 
   on :join do |m|
