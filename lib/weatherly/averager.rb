@@ -31,6 +31,8 @@ module Weatherly
           Inside\stemperature:\s([\d.]+)°C/x,
       use_prefix: false
     def execute(m, *matches)
+      return unless m.user.nick == config[:source]
+
       @mutex.synchronize do
         @values.push(matches.map do |v|
           v.gsub! /[^\d.]/, ''
@@ -59,7 +61,7 @@ module Weatherly
         sum
       end
 
-      @values = []
+      @values.clear
       @mutex.unlock
 
       sums[0] /= num_values.to_f
